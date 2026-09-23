@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/joshua/Projects/assembly_projects/http_server/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
