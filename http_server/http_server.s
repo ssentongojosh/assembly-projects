@@ -7,6 +7,13 @@
 # and also code reuse just like functions in high  level languages
 # No direct memeory to memory mov is allowed therefore this fails: mov [rax], [rbx]
 # You must use a temporary register to store the value such as mov rcx, [rbx] mov [rax], rcx
+#
+# word = 2 bytes
+# long = 4 bytes
+#
+# directives begin with a dot such as .zero. They are not instructions. They simply direct teh assembler on how 
+# to organize our data in memeory in preparation for communication
+# for example .zero 8 tells the compiler to reserve 8 bytes and zero them out
 
 _start:
 
@@ -32,16 +39,16 @@ _start:
 
     mov rdi, r15             # sockfd = socket(...) whatever socket returned
 
-    lea rsi, [rip + sockaddr_struct]
+    lea rsi, [rip + sockaddr_struct] # this is a relative address resolution returning address of the sockaddr_struct
 
-    mov rdx, 16
+    mov rdx, socklen_t       # socklen_t = socklen_t which 16 calculated via .equ directive
 
     mov rax, 49              # bind syscall
 
     syscall
 
 
-    # Start listening
+    # Start listening 
 
     mov rax, 50              # listen syscall
 
@@ -411,17 +418,22 @@ exit_child:
 
 
 # Data structures
+#
+# struct sockaddr  {
+# sa_family_t sa_family;
+# char        sa_data[14];
+# }
 
 sockaddr_struct:
 
-    .word 2                          # AF_INET
+    .word 2                          # sin_family =  AF_INET (ipv4)
 
-    .word 0x5000                     # port 80 (big endian)
+    .word 0x901F                     # sin_port =  8080 (big endian/ network byte order)
 
-    .long 0                          # INADDR_ANY
+    .long 0                          # sin_addr = INADDR_ANY (which is (in_addr_t) 0x00000000 ) or simply 0.0.0.0
 
-    .zero 8
-
+    .zero 8                          # sin_zero = 0
+.equ socklen_t, . - sockaddr_struct  # calculate length of this sockaddr structure
 
 client_addr:
 
