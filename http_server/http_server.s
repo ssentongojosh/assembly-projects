@@ -16,6 +16,31 @@
 # for example .zero 8 tells the compiler to reserve 8 bytes and zero them out
 
 _start:
+    call sleep
+
+    xor rsi,rsi
+
+    xor rdx, rdx
+
+    lea rsi, [rip + welcome_message]
+
+    mov rdx, OFFSET message_length
+
+    call write
+
+    call sleep
+
+    xor rsi, rsi
+
+    xor rdx, rdx
+
+    lea rsi, [rip + create_socket]
+
+    mov rdx, OFFSET socket_message
+
+    call write
+
+    call sleep
 
     # Create socket
     # int socket(int domain, int type, int protocol) returns a file descriptor of the new socket
@@ -33,7 +58,17 @@ _start:
 
     mov r15, rax             # store listening socket File Descriptor for use when calling listen
 
+    xor rsi,rsi
 
+    xor rdx,rdx
+
+    lea rsi, [rip + bind_to_socket]
+
+    mov rdx, OFFSET bind_message
+
+    call write 
+
+    call sleep
     # Bind socket to address
     # int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 
@@ -41,12 +76,20 @@ _start:
 
     lea rsi, [rip + sockaddr_struct] # this is a relative address resolution returning address of the sockaddr_struct
 
-    mov rdx, socklen_t       # socklen_t = socklen_t which 16 calculated via .equ directive
+    mov rdx, OFFSET  socklen_t       # socklen_t = socklen_t which 16 calculated via .equ directive
 
     mov rax, 49              # bind syscall
 
     syscall
 
+
+    lea rsi, [rip + listening_on_socket]
+
+    mov rdx, OFFSET listen_message
+
+    call write 
+
+    call sleep 
 
     # Start listening 
 
@@ -60,7 +103,19 @@ _start:
 
 
     jmp accept_loop
+sleep:
+    
+    #sleep 
+    #nanosleep(struct timespec *rqtp, struct, struct timespec *rmtp)
+    lea rdi, [rip + requested_time]
 
+    xor rsi,rsi
+
+    mov rax, 35
+
+    syscall
+
+    ret
 
 accept_loop:
 
@@ -416,6 +471,18 @@ exit_child:
 
     syscall
 
+write:
+    # write to terminal 
+    # write(uint file_descriptor, char* buffer, size_t count)
+
+    mov rdi, 1 
+
+    mov rax, 1 
+
+    syscall
+
+    ret
+
 
 # Data structures
 #
@@ -435,6 +502,22 @@ sockaddr_struct:
     .zero 8                          # sin_zero = 0
 .equ socklen_t, . - sockaddr_struct  # calculate length of this sockaddr structure
 
+welcome_message:
+    .string "*** Starting Http Server ***\n\n"
+
+.equ message_length, . - welcome_message
+create_socket:
+    .string "*** Creating Socket .... ***\n"
+.equ socket_message, . - create_socket
+bind_to_socket:
+    .string "*** Binding to created Socket .... ***\n"
+.equ bind_message, . - bind_to_socket
+listening_on_socket:
+    .string "*** listening on port 8080 ***\n\n"
+.equ listen_message, . - listening_on_socket
+requested_time:
+    .quad 1
+    .long 0
 client_addr:
 
     .zero 16
